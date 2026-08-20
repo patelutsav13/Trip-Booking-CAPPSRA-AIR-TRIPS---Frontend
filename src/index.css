@@ -27,6 +27,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 .dark body {
@@ -122,6 +123,24 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-flying-plane {
   animation: flyPlane 12s linear infinite;
 }
@@ -140,4 +159,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-spin-fast {
   animation: spinFast 0.4s linear infinite;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
 }
