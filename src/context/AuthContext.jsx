@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
 
-  axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://trip-booking-cappsra-air-trips-backend.onrender.com/api';
 
   if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
