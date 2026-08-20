@@ -57,7 +57,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #0b0f1a;
 }
 
-/* Continuous Airplane Flying Animations */
+/* Continuous Airplane Flying & Running Clouds Animations */
 @keyframes flyPlane {
   0% {
     transform: translateX(-150px) translateY(0px) rotate(15deg);
@@ -95,27 +95,49 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-@keyframes floatSlow {
-  0%, 100% {
-    transform: translateY(0px) translateX(0px);
+@keyframes cloudsDrift {
+  0% {
+    transform: translateX(100%);
   }
-  50% {
-    transform: translateY(-12px) translateX(15px);
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes cloudsDriftFast {
+  0% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(-120%);
+  }
+}
+
+@keyframes spinFast {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 
 .animate-flying-plane {
-  animation: flyPlane 14s linear infinite;
+  animation: flyPlane 12s linear infinite;
 }
 
 .animate-flying-plane-fast {
-  animation: flyPlaneFast 9s linear infinite 3s;
+  animation: flyPlaneFast 8s linear infinite 2s;
 }
 
-.animate-float-slow {
-  animation: floatSlow 8s ease-in-out infinite;
+.animate-clouds-drift {
+  animation: cloudsDrift 20s linear infinite;
 }
 
-.animate-float {
-  animation: floatSlow 6s ease-in-out infinite reverse;
+.animate-clouds-drift-fast {
+  animation: cloudsDriftFast 14s linear infinite 3s;
+}
+
+.animate-spin-fast {
+  animation: spinFast 0.4s linear infinite;
 }
