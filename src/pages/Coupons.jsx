@@ -6,11 +6,11 @@ import confetti from 'canvas-confetti';
 const Coupons = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [festivalLoading, setFestivalLoading] = useState(false);
+  const [claimingType, setClaimingType] = useState(null); // 'diwali', 'winter', 'summer'
   const [festivalMsg, setFestivalMsg] = useState('');
 
   // Subscription Modal State
-  const [selectedPackage, setSelectedPackage] = useState(null); // '6months' or 'yearly'
+  const [selectedPackage, setSelectedPackage] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [subscribing, setSubscribing] = useState(false);
   const [subSuccess, setSubSuccess] = useState(null);
@@ -20,7 +20,7 @@ const Coupons = () => {
       const { data } = await axios.get('/coupons/mycoupons');
       setClaims(data);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching coupons:', err);
     } finally {
       setLoading(false);
     }
@@ -30,18 +30,32 @@ const Coupons = () => {
     fetchMyCoupons();
   }, []);
 
+  // Compute claimed festival status for current year
+  const currentYear = new Date().getFullYear();
+  const startOfYear = new Date(currentYear, 0, 1).getTime();
+
+  const claimedSources = new Set(
+    claims
+      .filter(c => new Date(c.createdAt).getTime() >= startOfYear)
+      .map(c => c.claimSource)
+  );
+
+  const isDiwaliClaimed = claimedSources.has('festival_diwali');
+  const isWinterClaimed = claimedSources.has('festival_winter');
+  const isSummerClaimed = claimedSources.has('festival_summer');
+
   const handleClaimFestivalBonus = async (festivalType) => {
-    setFestivalLoading(true);
+    setClaimingType(festivalType);
     setFestivalMsg('');
     try {
       const { data } = await axios.post('/coupons/festival-bonus', { festivalType });
       setFestivalMsg(data.message);
-      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
       await fetchMyCoupons();
     } catch (err) {
-      setFestivalMsg(err.response?.data?.message || 'Failed to claim festival bonus coupons.');
+      setFestivalMsg(err.response?.data?.message || 'Failed to claim bonus coupons.');
     } finally {
-      setFestivalLoading(false);
+      setClaimingType(null);
     }
   };
 
@@ -73,7 +87,7 @@ const Coupons = () => {
     <div className="max-w-6xl mx-auto space-y-12 pb-16">
       
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-r from-blue-950 via-indigo-900 to-slate-900 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="space-y-2 relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-wider border border-blue-400/30">
@@ -83,12 +97,12 @@ const Coupons = () => {
             <TicketPercent className="text-blue-400" size={44} /> MY <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">DISCOUNT REWARDS</span>
           </h1>
           <p className="text-slate-300 text-base max-w-xl">
-            Claim festival bonuses, subscribe to premium coupon packs, and apply discounts to your flight bookings.
+            Claim festival bonuses, subscribe to VIP coupon passes, and apply discounts to your flight bookings.
           </p>
         </div>
         <div className="flex-shrink-0 relative z-10">
           <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-center">
-            <span className="text-2xl font-black text-amber-300">{claims.length}</span>
+            <span className="text-3xl font-black text-amber-300">{claims.length}</span>
             <span className="block text-xs font-bold text-slate-300 uppercase tracking-wider">Coupons Unlocked</span>
           </div>
         </div>
@@ -109,73 +123,100 @@ const Coupons = () => {
         </div>
 
         {festivalMsg && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-900/60 border border-emerald-400/40 text-emerald-200 text-sm font-semibold flex items-center gap-2">
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-900/80 border border-emerald-400/40 text-emerald-200 text-sm font-semibold flex items-center gap-2">
             <CheckCircle2 size={18} className="flex-shrink-0 text-emerald-400" />
             <span>{festivalMsg}</span>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Diwali Bonus */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/15 p-5 rounded-2xl flex flex-col justify-between hover:bg-white/15 transition-all">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Diwali Bonus Card */}
+          <div className={`backdrop-blur-md border p-6 rounded-2xl flex flex-col justify-between transition-all ${
+            isDiwaliClaimed ? 'bg-emerald-900/30 border-emerald-500/40' : 'bg-white/10 border-white/15 hover:bg-white/15'
+          }`}>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xl">🪔</span>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
-                  10 Days Before Diwali
+                <span className="text-2xl">🪔</span>
+                <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                  isDiwaliClaimed ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' : 'bg-amber-500/20 text-amber-300 border-amber-400/30'
+                }`}>
+                  {isDiwaliClaimed ? 'CLAIMED ✓' : '10 Days Before Diwali'}
                 </span>
               </div>
               <h3 className="font-bold text-lg text-white">Diwali Festival Bonus</h3>
               <p className="text-xs text-slate-300 mt-1">2 Free Random Discount Coupons sent directly to your email.</p>
             </div>
+            
             <button
-              disabled={festivalLoading}
+              disabled={claimingType === 'diwali' || isDiwaliClaimed}
               onClick={() => handleClaimFestivalBonus('diwali')}
-              className="mt-4 w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 font-bold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50"
+              className={`mt-5 w-full py-3 px-4 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5 ${
+                isDiwaliClaimed 
+                  ? 'bg-emerald-600/60 text-emerald-200 cursor-not-allowed border border-emerald-500/30' 
+                  : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg'
+              }`}
             >
-              {festivalLoading ? 'Claiming...' : 'Claim Diwali Bonus 🎉'}
+              {claimingType === 'diwali' ? 'Claiming...' : isDiwaliClaimed ? 'CLAIMED ✓' : 'Claim Diwali Bonus 🎉'}
             </button>
           </div>
 
-          {/* Winter / New Year Bonus */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/15 p-5 rounded-2xl flex flex-col justify-between hover:bg-white/15 transition-all">
+          {/* Winter / New Year Bonus Card */}
+          <div className={`backdrop-blur-md border p-6 rounded-2xl flex flex-col justify-between transition-all ${
+            isWinterClaimed ? 'bg-emerald-900/30 border-emerald-500/40' : 'bg-white/10 border-white/15 hover:bg-white/15'
+          }`}>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xl">❄️</span>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
-                  01/01 (Every Year)
+                <span className="text-2xl">❄️</span>
+                <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                  isWinterClaimed ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' : 'bg-cyan-500/20 text-cyan-300 border-cyan-400/30'
+                }`}>
+                  {isWinterClaimed ? 'CLAIMED ✓' : '01/01 (Every Year)'}
                 </span>
               </div>
               <h3 className="font-bold text-lg text-white">Winter / New Year Bonus</h3>
               <p className="text-xs text-slate-300 mt-1">2 Free Bonus Coupons to start your new year travels.</p>
             </div>
+
             <button
-              disabled={festivalLoading}
+              disabled={claimingType === 'winter' || isWinterClaimed}
               onClick={() => handleClaimFestivalBonus('winter')}
-              className="mt-4 w-full py-2.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 font-bold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50"
+              className={`mt-5 w-full py-3 px-4 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5 ${
+                isWinterClaimed 
+                  ? 'bg-emerald-600/60 text-emerald-200 cursor-not-allowed border border-emerald-500/30' 
+                  : 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg'
+              }`}
             >
-              {festivalLoading ? 'Claiming...' : 'Claim Winter Bonus ❄️'}
+              {claimingType === 'winter' ? 'Claiming...' : isWinterClaimed ? 'CLAIMED ✓' : 'Claim Winter Bonus ❄️'}
             </button>
           </div>
 
-          {/* Summer Vacation Bonus */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/15 p-5 rounded-2xl flex flex-col justify-between hover:bg-white/15 transition-all">
+          {/* Summer Vacation Bonus Card */}
+          <div className={`backdrop-blur-md border p-6 rounded-2xl flex flex-col justify-between transition-all ${
+            isSummerClaimed ? 'bg-emerald-900/30 border-emerald-500/40' : 'bg-white/10 border-white/15 hover:bg-white/15'
+          }`}>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xl">☀️</span>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-400/30">
-                  01/04 (Summer Vac)
+                <span className="text-2xl">☀️</span>
+                <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                  isSummerClaimed ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' : 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30'
+                }`}>
+                  {isSummerClaimed ? 'CLAIMED ✓' : '01/04 (Summer Vac)'}
                 </span>
               </div>
               <h3 className="font-bold text-lg text-white">Summer Vacation Bonus</h3>
               <p className="text-xs text-slate-300 mt-1">2 Free Bonus Coupons for summer trip planning.</p>
             </div>
+
             <button
-              disabled={festivalLoading}
+              disabled={claimingType === 'summer' || isSummerClaimed}
               onClick={() => handleClaimFestivalBonus('summer')}
-              className="mt-4 w-full py-2.5 px-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 font-bold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50"
+              className={`mt-5 w-full py-3 px-4 font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-center gap-1.5 ${
+                isSummerClaimed 
+                  ? 'bg-emerald-600/60 text-emerald-200 cursor-not-allowed border border-emerald-500/30' 
+                  : 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white shadow-lg'
+              }`}
             >
-              {festivalLoading ? 'Claiming...' : 'Claim Summer Bonus ☀️'}
+              {claimingType === 'summer' ? 'Claiming...' : isSummerClaimed ? 'CLAIMED ✓' : 'Claim Summer Bonus ☀️'}
             </button>
           </div>
         </div>
