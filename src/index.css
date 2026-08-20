@@ -39,7 +39,7 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.025em;
 }
 
-/* Custom Utilities that don't use @apply to avoid build issues */
+/* Custom Utilities */
 .ticket-cutout-left, .ticket-cutout-right {
   position: absolute;
   top: 50%;
@@ -57,3 +57,65 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #0b0f1a;
 }
 
+/* Continuous Airplane Flying Animations */
+@keyframes flyPlane {
+  0% {
+    transform: translateX(-150px) translateY(0px) rotate(15deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(50vw) translateY(-25px) rotate(18deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100vw + 150px)) translateY(-50px) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes flyPlaneFast {
+  0% {
+    transform: translateX(-200px) translateY(10px) rotate(10deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.7;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(calc(100vw + 200px)) translateY(-30px) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(-12px) translateX(15px);
+  }
+}
+
+.animate-flying-plane {
+  animation: flyPlane 14s linear infinite;
+}
+
+.animate-flying-plane-fast {
+  animation: flyPlaneFast 9s linear infinite 3s;
+}
+
+.animate-float-slow {
+  animation: floatSlow 8s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: floatSlow 6s ease-in-out infinite reverse;
+}

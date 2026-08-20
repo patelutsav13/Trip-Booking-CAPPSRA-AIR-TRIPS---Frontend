@@ -11,6 +11,7 @@ import AdminLayout from './layouts/AdminLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ResetPassword from './pages/ResetPassword';
 import TripsPage from './pages/Trips';
 import TripDetail from './pages/TripDetail';
 import Booking from './pages/Booking';
@@ -37,6 +38,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/trips" element={<TripsPage />} />
               <Route path="/trip/:id" element={<TripDetail />} />
               
