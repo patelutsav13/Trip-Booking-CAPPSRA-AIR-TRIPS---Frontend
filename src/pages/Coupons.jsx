@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { TicketPercent, CheckCircle2, Clock, Sparkles, Gift, Crown, CreditCard, ShieldCheck, X, Zap } from 'lucide-react';
+import { TicketPercent, CheckCircle2, Clock, Sparkles, Gift, Crown, CreditCard, ShieldCheck, X, Zap, Mail, HelpCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const Coupons = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [claimingType, setClaimingType] = useState(null); // 'diwali', 'winter', 'summer'
+  const [claimingType, setClaimingType] = useState(null);
   const [festivalMsg, setFestivalMsg] = useState('');
+  const [showSmtpGuide, setShowSmtpGuide] = useState(false);
 
   // Subscription Modal State
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -100,11 +101,17 @@ const Coupons = () => {
             Claim festival bonuses, subscribe to VIP coupon passes, and apply discounts to your flight bookings.
           </p>
         </div>
-        <div className="flex-shrink-0 relative z-10">
-          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-center">
+        <div className="flex-shrink-0 relative z-10 flex flex-col items-end gap-2">
+          <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-center w-full">
             <span className="text-3xl font-black text-amber-300">{claims.length}</span>
-            <span className="block text-xs font-bold text-slate-300 uppercase tracking-wider">Coupons Unlocked</span>
+            <span className="block text-xs font-bold text-slate-300 uppercase tracking-wider">Active Coupons</span>
           </div>
+          <button
+            onClick={() => setShowSmtpGuide(true)}
+            className="text-[11px] font-bold text-blue-300 hover:text-white flex items-center gap-1 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-400/30"
+          >
+            <Mail size={12} /> Nodemailer SMTP Guide
+          </button>
         </div>
       </div>
 
@@ -351,11 +358,13 @@ const Coupons = () => {
               const c = claim.coupon;
               if (!c) return null;
               const isExpired = new Date(c.expiryDate) < new Date();
-              const isActive = !claim.isClaimed && !isExpired;
+              // A coupon is ONLY USED if usedInBooking is set (not null)
+              const isUsed = !!claim.usedInBooking;
+              const isActive = !isUsed && !isExpired;
               
               return (
                 <div key={claim._id} className={`relative overflow-hidden rounded-[2rem] border-2 transition-all duration-500 ${
-                  claim.isClaimed ? 'bg-slate-50 border-slate-200 dark:bg-[#0f172a] dark:border-slate-800 opacity-60 scale-95' :
+                  isUsed ? 'bg-slate-50 border-slate-200 dark:bg-[#0f172a] dark:border-slate-800 opacity-60 scale-95' :
                   isExpired ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30 grayscale opacity-70' :
                   'bg-white dark:bg-dark-card border-slate-100 dark:border-dark-border shadow-xl hover:shadow-2xl hover:-translate-y-2'
                 }`}>
@@ -368,7 +377,7 @@ const Coupons = () => {
                          c.discountType === 'fixed' ? `₹${c.discountValue}` : 'FREE'}
                       </div>
                       
-                      {claim.isClaimed ? (
+                      {isUsed ? (
                         <span className="bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1 uppercase">
                           <CheckCircle2 size={12}/> Used
                         </span>
@@ -377,8 +386,8 @@ const Coupons = () => {
                           Expired
                         </span>
                       ) : (
-                        <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1 uppercase">
-                          <Clock size={12}/> Active
+                        <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 px-2.5 py-1 rounded-md text-xs font-extrabold flex items-center gap-1 uppercase border border-emerald-400/30">
+                          <Clock size={12}/> Active & Ready
                         </span>
                       )}
                     </div>
@@ -390,10 +399,10 @@ const Coupons = () => {
                       <span className="font-mono text-lg font-bold tracking-widest text-slate-800 dark:text-white">{c.code}</span>
                       <button 
                         disabled={!isActive}
-                        onClick={() => navigator.clipboard.writeText(c.code).then(() => alert(`Copied coupon code: ${c.code}`))}
-                        className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={() => navigator.clipboard.writeText(c.code).then(() => alert(`Copied active coupon code: ${c.code}`))}
+                        className="text-xs font-extrabold px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 transition-all active:scale-95"
                       >
-                        COPY
+                        COPY CODE
                       </button>
                       
                       <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white dark:bg-dark-card border-r border-slate-100 dark:border-dark-border"></div>
@@ -410,6 +419,59 @@ const Coupons = () => {
           </div>
         )}
       </div>
+
+      {/* NODEMAILER SETUP GUIDE MODAL */}
+      {showSmtpGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-white dark:bg-dark-card max-w-xl w-full rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-dark-border relative">
+            <button
+              onClick={() => setShowSmtpGuide(false)}
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Mail size={28} />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Gmail Nodemailer App Password Setup</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Follow these 4 steps to send real Gmail emails to your users!</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
+              <div className="p-4 bg-slate-50 dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-dark-border">
+                <h4 className="font-bold text-slate-900 dark:text-white mb-1">Step 1: Enable Google 2-Step Verification</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Go to Google Account Security and turn ON 2-Step Verification.</p>
+                <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:underline">Open Google Security Settings →</a>
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-dark-border">
+                <h4 className="font-bold text-slate-900 dark:text-white mb-1">Step 2: Generate Gmail App Password</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Go to Google App Passwords, create an app named "Cappsra Nodemailer" and copy the 16-character code.</p>
+                <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-600 hover:underline">Open Google App Passwords →</a>
+              </div>
+
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/40 rounded-2xl border border-blue-200 dark:border-blue-900/50">
+                <h4 className="font-bold text-blue-900 dark:text-blue-200 mb-1">Step 3: Add to Render Environment Variables</h4>
+                <p className="text-xs text-blue-800 dark:text-blue-300 font-mono">
+                  EMAIL_USER = patelutsav312@gmail.com<br/>
+                  EMAIL_PASS = xxxx xxxx xxxx xxxx (16-char App Password)
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowSmtpGuide(false)}
+              className="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl"
+            >
+              Done & Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* SUBSCRIPTION PAYMENT MODAL */}
       {selectedPackage && (
